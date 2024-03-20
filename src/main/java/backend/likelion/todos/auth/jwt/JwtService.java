@@ -24,15 +24,28 @@ public class JwtService {
 
     // 회원 ID를 기반으로 JWT 토큰을 생성합니다.
     public String createToken(Long memberId) {
-        // TODO [5단계] 현재 시간과 설정된 만료 시간을 사용하여 만료 날짜를 설정하세요.
-        // TODO [5단계] memberId를 클레임으로 추가하세요.
-        // TODO [5단계] 설정된 알고리즘으로 토큰을 서명하고 반환하세요.
-        return null;
+        Date now = new Date(); // 현재 시간
+        Date expiryDate = new Date(now.getTime() + accessTokenExpirationDayToMills); // 만료 시간
+
+        return JWT.create()
+                .withClaim("memberId", memberId)
+                .withIssuedAt(now)
+                .withExpiresAt(expiryDate)
+                .sign(algorithm); // 설정된 알고리즘으로 서명
     }
 
     // 토큰에서 회원 ID를 추출합니다.
     public Long extractMemberId(String token) {
-        // TODO [5단계] 알고리즘을 사용해 토큰의 유효성을 검증하고, "memberId" 클레임에서 회원 ID를 추출하세요. 유효하지 않은 경우 "유효하지 않은 토큰입니다." 메시지와 함께 UnAuthorizedException을 발생시키세요.
-        return null;
+        try {
+            // 토큰의 유효성을 검증합니다.
+            JWT.require(algorithm)
+                    .build()
+                    .verify(token);
+            // "memberId" 클레임에서 회원 ID를 추출합니다.
+            return JWT.decode(token).getClaim("memberId").asLong();
+        } catch (JWTVerificationException exception) {
+            // 유효하지 않은 경우 예외를 발생시킵니다.
+            throw new UnAuthorizedException("유효하지 않은 토큰입니다.");
+        }
     }
 }
